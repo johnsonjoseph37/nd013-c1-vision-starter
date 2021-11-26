@@ -11,8 +11,6 @@ gcloud auth login
 
 jupyter notebook --port 8888 --ip=0.0.0.0 --allow-root
 
-python -m tensorboard.main --logdir /home/workspace/experiments/reference/ --bind_all
-
 
 python download_process.py --data_dir /home/workspace/data/waymo
 
@@ -44,7 +42,7 @@ python experiments/model_main_tf2.py --model_dir=experiments/reference/ --pipeli
 
 python experiments/model_main_tf2.py --model_dir=experiments/reference/ --pipeline_config_path=experiments/reference/pipeline_new.config --checkpoint_dir=experiments/reference/
 
-python -m tensorboard.main --logdir /home/workspace/experiments/reference/
+python -m tensorboard.main --logdir /home/workspace/experiments/reference/ --bind_all
 
 
 ----------------------------------

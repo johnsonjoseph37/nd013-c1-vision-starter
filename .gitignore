@@ -4,3 +4,4 @@ segment-*
 experiments/**/c*
 experiments/**/events*
 experiments/**/saved*
+.vs
