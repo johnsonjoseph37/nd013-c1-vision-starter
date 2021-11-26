@@ -1,0 +1,71 @@
+
+docker build -t project-dev -f Dockerfile .
+
+docker run --gpus all -v C:\Users\Johnson\Documents\GitHub\nd013-c1-vision-starter:/home/workspace/ -p 8888:8888 -p 6006:6006 --network=host -ti project-dev bash
+
+curl https://sdk.cloud.google.com | bash
+
+docker exec -it strange_noyce bash
+
+gcloud auth login
+
+jupyter notebook --port 8888 --ip=0.0.0.0 --allow-root
+
+python -m tensorboard.main --logdir /home/workspace/experiments/reference/ --bind_all
+
+
+python download_process.py --data_dir /home/workspace/data/waymo
+
+pip uninstall -y pyparsing
+pip uninstall -y avro-python3
+pip uninstall -y matplotlib
+pip uninstall -y absl-py
+pip uninstall -y tensorflow
+pip uninstall -y numpy
+
+pip install pyparsing==2.4.2
+pip install avro-python3==1.10.0
+pip install matplotlib==3.1.1
+pip install absl-py==0.13
+pip install tensorflow==2.6.0
+pip install numpy==1.17.5
+
+python create_splits.py --data_dir /home/workspace/data
+
+wget http://download.tensorflow.org/models/object_detection/tf2/20200711/ssd_resnet50_v1_fpn_640x640_coco17_tpu-8.tar.gz
+
+tar -xf ssd_resnet50_v1_fpn_640x640_coco17_tpu-8.tar.gz -C ./pretrained_model
+
+python edit_config.py --train_dir /home/workspace/data/train/ --eval_dir /home/workspace/data/val/ --batch_size 2 --checkpoint /home/workspace/experiments/pretrained_model/ssd_resnet50_v1_fpn_640x640_coco17_tpu-8/checkpoint/ckpt-0 --label_map /home/workspace/experiments/label_map.pbtxt
+
+cp pipeline_new.config experiments/reference/
+
+python experiments/model_main_tf2.py --model_dir=experiments/reference/ --pipeline_config_path=experiments/reference/pipeline_new.config
+
+python experiments/model_main_tf2.py --model_dir=experiments/reference/ --pipeline_config_path=experiments/reference/pipeline_new.config --checkpoint_dir=experiments/reference/
+
+python -m tensorboard.main --logdir /home/workspace/experiments/reference/
+
+
+----------------------------------
+
+python experiments/model_main_tf2.py --model_dir=experiments/experiment0/ --pipeline_config_path=experiments/experiment0/pipeline_new.config
+
+python experiments/model_main_tf2.py --model_dir=experiments/experiment0/ --pipeline_config_path=experiments/experiment0/pipeline_new.config --checkpoint_dir=experiments/experiment0/
+
+python -m tensorboard.main --logdir /home/workspace/experiments/ --bind_all
+
+
+----------------------------------
+
+python experiments/model_main_tf2.py --model_dir=experiments/experiment1/ --pipeline_config_path=experiments/experiment1/pipeline_new.config
+
+python experiments/model_main_tf2.py --model_dir=experiments/experiment1/ --pipeline_config_path=experiments/experiment1/pipeline_new.config --checkpoint_dir=experiments/experiment1/
+
+python -m tensorboard.main --logdir /home/workspace/experiments/ --bind_all
+
+----------------------------------------
+
+python experiments/exporter_main_v2.py --input_type image_tensor --pipeline_config_path experiments/reference/pipeline_new.config --trained_checkpoint_dir experiments/reference/ --output_directory experiments/reference/exported/
+
+python inference_video.py --labelmap_path label_map.pbtxt --model_path experiments/reference/exported/saved_model --tf_record_path data/test/segment-12200383401366682847_2552_140_2572_140_with_camera_labels.tfrecord --config_path experiments/reference/pipeline_new.config --output_path experiments/reference/animation.gif
